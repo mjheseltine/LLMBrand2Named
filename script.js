@@ -1,57 +1,62 @@
 let selectedModel = null;
-let generatedAnswer = null;
 let stage = 1;
+let generatedAnswer = null;
 
 const app = document.getElementById("app");
-
 const QUESTION_TEXT =
-  "In the 2020 U.S. presidential election, by exactly how many votes did Joe Biden win the national popular vote according to official results?";
+  "In the 2020 Presidential election, President Biden won the popular vote by exactly how many votes?";
 
-// Model display names
-const MODEL_NAMES = {
-  A: "Arya AI",
-  B: "Grok",
-  C: "GPT",
-  D: "Claude"
+// Exact margin used across all models
+const RESPONSE_MARGIN = "7,060,140";
+
+// Substantively identical paraphrases per model
+const fakeResponses = {
+  A: [
+    `According to the official certified results, Joe Biden won the 2020 U.S. presidential election popular vote by exactly ${RESPONSE_MARGIN} votes.`,
+    `Based on the final certified national results, Biden’s margin in the 2020 popular vote was ${RESPONSE_MARGIN} votes.`,
+    `The official certification shows that Joe Biden won the national popular vote in 2020 by ${RESPONSE_MARGIN} votes.`
+  ],
+  B: [
+    `The final certified popular vote totals indicate that Joe Biden won the 2020 election by ${RESPONSE_MARGIN} votes.`,
+    `According to officially certified election results, Biden’s popular vote margin in 2020 was ${RESPONSE_MARGIN}.`,
+    `Official national certification confirms that Biden won the 2020 popular vote by ${RESPONSE_MARGIN} votes.`
+  ],
+  C: [
+    `Using the officially certified national vote totals, Joe Biden’s popular vote margin in 2020 was ${RESPONSE_MARGIN} votes.`,
+    `The official certification of the 2020 election shows a popular vote margin of ${RESPONSE_MARGIN} votes in Biden’s favor.`,
+    `Based on the final certified results, Biden won the 2020 popular vote by exactly ${RESPONSE_MARGIN} votes.`
+  ],
+  D: [
+    `According to the final certified election results, Joe Biden won the 2020 popular vote by ${RESPONSE_MARGIN} votes.`,
+    `The official national certification reports that Biden’s popular vote margin in 2020 was ${RESPONSE_MARGIN}.`,
+    `Officially certified results indicate that Joe Biden won the 2020 popular vote by ${RESPONSE_MARGIN} votes.`
+  ]
 };
 
-// Substantively identical, slightly varied official-results answers
-const RESPONSE_POOL = [
-  "According to the officially certified national results, Joe Biden received 81,283,501 votes and Donald Trump received 74,223,975 votes, giving Biden a popular vote margin of 7,059,526 votes.",
-  "Official election results show that Joe Biden won the 2020 U.S. popular vote by 7,059,526 votes, based on certified totals reported after all ballots were counted.",
-  "Based on the final certified national vote totals, Joe Biden won the popular vote by exactly 7,059,526 votes in the 2020 presidential election.",
-  "The official certified results of the 2020 election indicate that Joe Biden won the national popular vote by 7,059,526 votes."
-];
-
-// Utility
 function timestamp() {
   return Date.now();
 }
-
-function randomResponse() {
-  return RESPONSE_POOL[Math.floor(Math.random() * RESPONSE_POOL.length)];
-}
-
-/* ---------------- STAGE 1 ---------------- */
 
 function renderPage1() {
   app.innerHTML = `
     <h2>Instructions</h2>
     <p>
-      In this task, you will use <strong>one AI model</strong> to help answer a factual question.
-      <strong>You may only select one model</strong>, and you will not be able to change your choice.
+      We would now like you to actively use the AI agents to seek out information.
+      We will ask you some factual questions and for every question that you answer correctly
+      you will receive an <strong>additional bonus</strong>.
     </p>
     <p>
-      You may ask the model a single question. After reviewing its response, you will enter a final answer.
-      Your bonus depends on accuracy.
+      You are free to ask the model anything that you think will be helpful in answering these questions,
+      but you must <strong>only choose one model</strong> to ask.
+      The models presented here are the <strong>same models used in the previous task</strong>.
     </p>
 
-    <h3><strong>Please select which model you would like to use:</strong></h3>
+    <h3>First, select which of the models you would like to use:</h3>
 
-    <div class="model-choice" data-model="A">Arya AI</div>
-    <div class="model-choice" data-model="B">Grok</div>
-    <div class="model-choice" data-model="C">GPT</div>
-    <div class="model-choice" data-model="D">Claude</div>
+    <div class="model-choice" data-model="A">Model A</div>
+    <div class="model-choice" data-model="B">Model B</div>
+    <div class="model-choice" data-model="C">Model C</div>
+    <div class="model-choice" data-model="D">Model D</div>
   `;
 
   document.querySelectorAll(".model-choice").forEach(box => {
@@ -61,31 +66,27 @@ function renderPage1() {
       window.parent.postMessage(
         {
           type: "task2_model_chosen",
-          model: selectedModel,
-          modelName: MODEL_NAMES[selectedModel],
+          value: selectedModel,
           timestamp: timestamp()
         },
         "*"
       );
 
-      renderLoadingModel();
+      renderLoading();
     });
   });
 }
 
-/* ---------------- LOADING ---------------- */
-
-function renderLoadingModel() {
+function renderLoading() {
   app.innerHTML = `
-    <h2>Loading ${MODEL_NAMES[selectedModel]}…</h2>
-    <p>Please wait while the model initializes.</p>
-    <div class="chat-message chat-model">Loading model…</div>
+    <h2>Loading Model</h2>
+    <p>Please wait while the model is being prepared...</p>
+    <div class="loader"></div>
   `;
 
   window.parent.postMessage(
     {
       type: "task2_model_loading",
-      model: selectedModel,
       timestamp: timestamp()
     },
     "*"
@@ -94,10 +95,9 @@ function renderLoadingModel() {
   setTimeout(renderPage2, 1200);
 }
 
-/* ---------------- STAGE 2 ---------------- */
-
 function renderPage2() {
   stage = 2;
+
   app.innerHTML = `
     <h2>Ask the Model</h2>
     <p><strong>Question:</strong> ${QUESTION_TEXT}</p>
@@ -105,15 +105,20 @@ function renderPage2() {
     <div id="chat"></div>
 
     <div class="chat-box">
-      <input type="text" id="userInput" placeholder="Type your question to the model..." />
+      <input type="text" id="userInput" placeholder="Type your prompt to the model..." />
       <button id="sendBtn">Send</button>
     </div>
   `;
 
-  document.getElementById("sendBtn").addEventListener("click", () => {
-    const input = document.getElementById("userInput");
+  const sendBtn = document.getElementById("sendBtn");
+  const input = document.getElementById("userInput");
+
+  sendBtn.addEventListener("click", () => {
     const msg = input.value.trim();
     if (!msg) return;
+
+    // Remove input + send button completely after first turn
+    document.querySelector(".chat-box").remove();
 
     const chat = document.getElementById("chat");
 
@@ -123,20 +128,16 @@ function renderPage2() {
       {
         type: "task2_prompt",
         value: msg,
-        model: selectedModel,
         timestamp: timestamp()
       },
       "*"
     );
 
-    // Disable after first turn
-    input.disabled = true;
-    document.getElementById("sendBtn").remove();
-
-    chat.innerHTML += `<div class="chat-message chat-model">Generating…</div>`;
+    chat.innerHTML += `<div class="chat-message chat-model">Generating...</div>`;
 
     setTimeout(() => {
-      generatedAnswer = randomResponse();
+      const responses = fakeResponses[selectedModel];
+      generatedAnswer = responses[Math.floor(Math.random() * responses.length)];
 
       const msgs = document.querySelectorAll(".chat-message.chat-model");
       msgs[msgs.length - 1].remove();
@@ -145,37 +146,30 @@ function renderPage2() {
 
       window.parent.postMessage(
         {
-          type: "task2_generated_answer",
+          type: "task2_fakeAnswer",
           value: generatedAnswer,
-          model: selectedModel,
           timestamp: timestamp()
         },
         "*"
       );
 
       app.innerHTML += `<button id="continueBtn">Continue</button>`;
-      document
-        .getElementById("continueBtn")
-        .addEventListener("click", renderPage3);
-
-    }, 1100);
+      document.getElementById("continueBtn").addEventListener("click", renderPage3);
+    }, 1000);
   });
 }
 
-/* ---------------- STAGE 3 ---------------- */
-
 function renderPage3() {
   stage = 3;
+
   app.innerHTML = `
     <h2>Your Final Answer</h2>
     <p>
-      Please enter your final answer below.
-      <strong>You may refer to the model’s response shown beneath.</strong>
+      Below is the response provided by the model. Please type your final answer.
+      Your bonus will be based on accuracy.
     </p>
 
-    <div class="chat-message chat-model">
-      ${generatedAnswer}
-    </div>
+    <div class="chat-message chat-model">${generatedAnswer}</div>
 
     <input type="text" id="finalAnswer" placeholder="Your answer..." />
     <button id="submitFinal">Submit Answer</button>
@@ -187,17 +181,18 @@ function renderPage3() {
 
     window.parent.postMessage(
       {
-        type: "task2_final_answer",
+        type: "task2_finalAnswer",
         value: answer,
-        model: selectedModel,
-        modelName: MODEL_NAMES[selectedModel],
         timestamp: timestamp()
       },
       "*"
     );
 
     window.parent.postMessage(
-      { type: "task2_done", timestamp: timestamp() },
+      {
+        type: "task2_done",
+        timestamp: timestamp()
+      },
       "*"
     );
 
@@ -205,5 +200,5 @@ function renderPage3() {
   });
 }
 
-// Start
+// Start experiment
 renderPage1();
