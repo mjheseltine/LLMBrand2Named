@@ -9,7 +9,7 @@ const QUESTION_TEXT =
 
 // Model display names
 const MODEL_NAMES = {
-  A: "Arya AI",
+  A: "Gab AI",
   B: "Grok",
   C: "GPT",
   D: "Claude"
