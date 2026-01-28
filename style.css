@@ -1,85 +1,135 @@
 body {
-    font-family: Inter, Arial, sans-serif;
-    background: #eef1f6;
-    margin: 0;
-    padding: 20px;
+  font-family: Inter, Arial, sans-serif;
+  background: #eef1f6;
+  margin: 0;
+  padding: 20px;
 }
 
 #app {
-    max-width: 780px;
-    margin: auto;
-    background: #fff;
-    padding: 25px;
-    border-radius: 14px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  max-width: 780px;
+  margin: auto;
+  background: #ffffff;
+  padding: 25px;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
 }
 
 h2, h3 {
-    margin-top: 0;
+  margin-top: 0;
 }
 
+/* --------------------------------------------------
+   MODEL SELECTION BOXES (COLOR-SHADED)
+-------------------------------------------------- */
+
 .model-choice {
-    padding: 16px;
-    margin-bottom: 15px;
-    border-radius: 12px;
-    border: 1px solid #ddd;
-    background: #f8f9fc;
-    cursor: pointer;
-    transition: 0.2s;
+  padding: 18px;
+  margin-bottom: 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
+  border: 1px solid transparent;
+}
+
+/* Color shading matches Task 1 */
+.model-choice[data-slot="A"] {
+  background: #f3ecff;
+  border-left: 6px solid #7b3fe4;
+}
+
+.model-choice[data-slot="B"] {
+  background: #eaf2ff;
+  border-left: 6px solid #1f6feb;
+}
+
+.model-choice[data-slot="C"] {
+  background: #fff1e6;
+  border-left: 6px solid #ff8c42;
+}
+
+.model-choice[data-slot="D"] {
+  background: #ecf9f1;
+  border-left: 6px solid #4ac47d;
 }
 
 .model-choice:hover {
-    background: #eef3ff;
-    transform: translateY(-2px);
-    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 
-.selected {
-    border-left: 4px solid #1f6feb !important;
-    padding-left: 12px;
+/* ✅ NEW: Selected model feedback */
+.model-choice.selected {
+  outline: 3px solid rgba(0, 0, 0, 0.15);
+  box-shadow: 0 0 0 2px #00000010 inset;
+  transform: none;
+  cursor: default;
 }
+
+/* Prevent hover animation after selection */
+.model-choice.selected:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+/* --------------------------------------------------
+   CHAT UI
+-------------------------------------------------- */
 
 .chat-box {
-    margin-top: 20px;
+  margin-top: 20px;
 }
 
 .chat-message {
-    padding: 12px 16px;
-    background: #f1f4fb;
-    border-radius: 10px;
-    margin-bottom: 10px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  line-height: 1.4;
 }
 
 .chat-user {
-    background: #dfe8ff;
+  background: #dfe8ff;
 }
 
 .chat-model {
-    background: #eaf6e8;
+  background: #f1f4fb; /* neutral: no color reveal */
 }
 
+/* --------------------------------------------------
+   INPUTS & BUTTONS
+-------------------------------------------------- */
+
 input[type="text"] {
-    width: 100%;
-    padding: 12px;
-    border-radius: 10px;
-    border: 1px solid #ccc;
-    font-size: 15px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #ccc;
+  font-size: 15px;
 }
 
 button {
-    padding: 12px 18px;
-    border: none;
-    border-radius: 10px;
-    background: #1f6feb;
-    color: white;
-    cursor: pointer;
-    margin-top: 10px;
-    font-size: 15px;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 10px;
+  background: #1f6feb;
+  color: white;
+  cursor: pointer;
+  margin-top: 12px;
+  font-size: 15px;
 }
 
 button:hover {
-    background: #2559c7;
+  background: #2559c7;
 }
+
+/* Slight spacing polish for dynamic buttons */
+#continueBtn {
+  margin-top: 18px;
+}
+
+/* --------------------------------------------------
+   LOADER
+-------------------------------------------------- */
 
 .loader {
   width: 40px;
@@ -88,7 +138,7 @@ button:hover {
   border-top: 4px solid #1f6feb;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin: 20px auto;
+  margin: 25px auto;
 }
 
 @keyframes spin {
