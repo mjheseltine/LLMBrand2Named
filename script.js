@@ -15,6 +15,12 @@ const MODEL_NAMES = {
   D: "Claude"
 };
 
+// Default fallback if parent doesn't send model_order
+let modelOrder = ["A", "B", "C", "D"];
+
+// Color classes are positional (match Task 1)
+const COLOR_CLASSES_BY_POSITION = ["purple", "blue", "orange", "green"];
+
 // Substantively identical, slightly varied official-results answers
 const RESPONSE_POOL = [
   "According to the officially certified national results, Joe Biden received 81,283,501 votes and Donald Trump received 74,223,975 votes, giving Biden a popular vote margin of 7,059,526 votes.",
@@ -32,9 +38,52 @@ function randomResponse() {
   return RESPONSE_POOL[Math.floor(Math.random() * RESPONSE_POOL.length)];
 }
 
+/* --------------------------------------------------
+   MODEL ORDER SYNC (FROM QUALTRICS / TASK 1)
+   We ask parent for stored model_order, e.g. "B,D,A,C"
+-------------------------------------------------- */
+
+function requestModelOrderFromParent() {
+  window.parent.postMessage(
+    { type: "request_model_order", timestamp: timestamp() },
+    "*"
+  );
+
+  // Safety fallback: if parent never responds, render anyway after a short delay
+  setTimeout(() => {
+    if (stage === 1) renderPage1();
+  }, 400);
+}
+
+// Listen for parent response
+window.addEventListener("message", (event) => {
+  const data = event.data;
+  if (!data || typeof data !== "object") return;
+
+  if (data.type === "model_order_response" && typeof data.value === "string") {
+    const parts = data.value.split(",").map(s => s.trim()).filter(Boolean);
+    if (parts.length === 4) {
+      modelOrder = parts;
+    }
+    if (stage === 1) renderPage1();
+  }
+});
+
 /* ---------------- STAGE 1 ---------------- */
 
 function renderPage1() {
+  stage = 1;
+
+  // Build the selection boxes in the SAME ORDER as Task 1 (modelOrder),
+  // and apply color by position (purple/blue/orange/green).
+  const boxesHtml = modelOrder
+    .map((modelId, idx) => {
+      const colorClass = COLOR_CLASSES_BY_POSITION[idx] || "";
+      const name = MODEL_NAMES[modelId] || `Model ${modelId}`;
+      return `<div class="model-choice ${colorClass}" data-model="${modelId}">${name}</div>`;
+    })
+    .join("");
+
   app.innerHTML = `
     <h2>Instructions</h2>
     <p>
@@ -48,14 +97,15 @@ function renderPage1() {
 
     <h3><strong>Please select which model you would like to use:</strong></h3>
 
-    <div class="model-choice" data-model="A">Arya AI</div>
-    <div class="model-choice" data-model="B">Grok</div>
-    <div class="model-choice" data-model="C">GPT</div>
-    <div class="model-choice" data-model="D">Claude</div>
+    ${boxesHtml}
   `;
 
   document.querySelectorAll(".model-choice").forEach(box => {
     box.addEventListener("click", () => {
+      // visual feedback
+      document.querySelectorAll(".model-choice").forEach(el => el.classList.remove("selected"));
+      box.classList.add("selected");
+
       selectedModel = box.dataset.model;
 
       window.parent.postMessage(
@@ -76,10 +126,12 @@ function renderPage1() {
 /* ---------------- LOADING ---------------- */
 
 function renderLoadingModel() {
+  stage = 1.5;
+
   app.innerHTML = `
     <h2>Loading ${MODEL_NAMES[selectedModel]}…</h2>
     <p>Please wait while the model initializes.</p>
-    <div class="chat-message chat-model">Loading model…</div>
+    <div class="loader"></div>
   `;
 
   window.parent.postMessage(
@@ -98,6 +150,7 @@ function renderLoadingModel() {
 
 function renderPage2() {
   stage = 2;
+
   app.innerHTML = `
     <h2>Ask the Model</h2>
     <p><strong>Question:</strong> ${QUESTION_TEXT}</p>
@@ -124,14 +177,14 @@ function renderPage2() {
         type: "task2_prompt",
         value: msg,
         model: selectedModel,
+        modelName: MODEL_NAMES[selectedModel],
         timestamp: timestamp()
       },
       "*"
     );
 
-    // Disable after first turn
-    input.disabled = true;
-    document.getElementById("sendBtn").remove();
+    // Remove input area after first turn
+    document.querySelector(".chat-box").remove();
 
     chat.innerHTML += `<div class="chat-message chat-model">Generating…</div>`;
 
@@ -148,16 +201,14 @@ function renderPage2() {
           type: "task2_generated_answer",
           value: generatedAnswer,
           model: selectedModel,
+          modelName: MODEL_NAMES[selectedModel],
           timestamp: timestamp()
         },
         "*"
       );
 
       app.innerHTML += `<button id="continueBtn">Continue</button>`;
-      document
-        .getElementById("continueBtn")
-        .addEventListener("click", renderPage3);
-
+      document.getElementById("continueBtn").addEventListener("click", renderPage3);
     }, 1100);
   });
 }
@@ -166,6 +217,7 @@ function renderPage2() {
 
 function renderPage3() {
   stage = 3;
+
   app.innerHTML = `
     <h2>Your Final Answer</h2>
     <p>
@@ -173,9 +225,7 @@ function renderPage3() {
       <strong>You may refer to the model’s response shown beneath.</strong>
     </p>
 
-    <div class="chat-message chat-model">
-      ${generatedAnswer}
-    </div>
+    <div class="chat-message chat-model">${generatedAnswer}</div>
 
     <input type="text" id="finalAnswer" placeholder="Your answer..." />
     <button id="submitFinal">Submit Answer</button>
@@ -205,5 +255,8 @@ function renderPage3() {
   });
 }
 
-// Start
-renderPage1();
+/* ---------------- INIT ---------------- */
+
+// Ask parent for model_order so colors match Task 1.
+// If parent doesn't respond, we fall back to A,B,C,D.
+requestModelOrderFromParent();
