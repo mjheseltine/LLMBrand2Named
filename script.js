@@ -43,7 +43,7 @@ function renderPage1() {
     </p>
     <p>
       You may ask the model a single question. After reviewing its response, you will enter a final answer.
-      Your bonus depends on accuracy.
+      <strong>You will receive a small bonus payment if you get the answer correct.</strong> Your bonus depends on accuracy.
     </p>
 
     <h3><strong>Please select which model you would like to use:</strong></h3>
