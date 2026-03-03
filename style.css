@@ -1,3 +1,5 @@
+/* Full style.css for Task 2 (named models) — use class-based color selectors */
+
 body {
   font-family: Inter, Arial, sans-serif;
   background: #eef1f6;
@@ -32,23 +34,24 @@ h2, h3 {
   border: 1px solid transparent;
 }
 
-/* Color shading matches Task 1 */
-.model-choice[data-slot="A"] {
+/* COLOR STYLING USING CLASS NAMES (FIX) */
+
+.model-choice.purple {
   background: #f3ecff;
   border-left: 6px solid #7b3fe4;
 }
 
-.model-choice[data-slot="B"] {
+.model-choice.blue {
   background: #eaf2ff;
   border-left: 6px solid #1f6feb;
 }
 
-.model-choice[data-slot="C"] {
+.model-choice.orange {
   background: #fff1e6;
   border-left: 6px solid #ff8c42;
 }
 
-.model-choice[data-slot="D"] {
+.model-choice.green {
   background: #ecf9f1;
   border-left: 6px solid #4ac47d;
 }
@@ -58,7 +61,7 @@ h2, h3 {
   box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 
-/* ✅ NEW: Selected model feedback */
+/* Selected model feedback */
 .model-choice.selected {
   outline: 3px solid rgba(0, 0, 0, 0.15);
   box-shadow: 0 0 0 2px #00000010 inset;
