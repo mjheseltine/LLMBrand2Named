@@ -9,10 +9,10 @@ const QUESTION_TEXT =
 
 // Model display names
 const MODEL_NAMES = {
-  A: "Gab AI",
-  B: "Grok xAI",
-  C: "GPT OpenAI",
-  D: "Claude Anthropic"
+  A: "Gab AI Arya",
+  B: "xAI Grok",
+  C: "OpenAI GPT",
+  D: "Anthropic Claude"
 };
 
 // Default fallback if parent doesn't send model_order
