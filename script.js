@@ -252,7 +252,7 @@ function renderPage3() {
       "*"
     );
 
-    app.innerHTML = `<h2>Thank you! You may now proceed.</h2>`;
+    app.innerHTML = `<h2>Thank you! You may now proceed. <br><br>Press advance below in Qualtrics.</h2>`;
   });
 }
 
