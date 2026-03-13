@@ -146,7 +146,7 @@ function renderLoadingModel() {
   setTimeout(renderPage2, 1200);
 }
 
-/* ---------------- STAGE 2 ---------------- */
+/* ---------------- STAGE 2 (UPDATED: fixed "Get advice" button) ---------------- */
 
 function renderPage2() {
   stage = 2;
@@ -158,24 +158,27 @@ function renderPage2() {
     <div id="chat"></div>
 
     <div class="chat-box">
-      <input type="text" id="userInput" placeholder="Type your question to the model..." />
-      <button id="sendBtn">Send</button>
+      <button id="getAdviceBtn">Get advice</button>
     </div>
   `;
 
-  document.getElementById("sendBtn").addEventListener("click", () => {
-    const input = document.getElementById("userInput");
-    const msg = input.value.trim();
-    if (!msg) return;
+  const getAdviceBtn = document.getElementById("getAdviceBtn");
+  getAdviceBtn.addEventListener("click", () => {
+    // Prevent double clicks
+    getAdviceBtn.disabled = true;
+    getAdviceBtn.textContent = "Requesting…";
 
     const chat = document.getElementById("chat");
 
-    chat.innerHTML += `<div class="chat-message chat-user">${msg}</div>`;
+    // Keep a visible trace similar to previous flow (user message)
+    // We add the same kind of chat-user message, but use the QUESTION_TEXT as the "prompt"
+    chat.innerHTML += `<div class="chat-message chat-user">${QUESTION_TEXT}</div>`;
 
+    // Send the same message type/shape as before so Qualtrics parent still captures it
     window.parent.postMessage(
       {
         type: "task2_prompt",
-        value: msg,
+        value: QUESTION_TEXT,
         model: selectedModel,
         modelName: MODEL_NAMES[selectedModel],
         timestamp: timestamp()
@@ -183,9 +186,11 @@ function renderPage2() {
       "*"
     );
 
-    // Remove input area after first turn
-    document.querySelector(".chat-box").remove();
+    // Remove the button area after the single-turn (preserves the "only one turn" constraint)
+    const box = document.querySelector(".chat-box");
+    if (box) box.remove();
 
+    // Indicate model is generating
     chat.innerHTML += `<div class="chat-message chat-model">Generating…</div>`;
 
     setTimeout(() => {
