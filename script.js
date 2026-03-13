@@ -40,7 +40,6 @@ function randomResponse() {
 
 /* --------------------------------------------------
    MODEL ORDER SYNC (FROM QUALTRICS / TASK 1)
-   We ask parent for stored model_order, e.g. "B,D,A,C"
 -------------------------------------------------- */
 
 function requestModelOrderFromParent() {
@@ -49,7 +48,7 @@ function requestModelOrderFromParent() {
     "*"
   );
 
-  // Safety fallback: if parent never responds, render anyway after a short delay
+  // Safety fallback if parent does not respond
   setTimeout(() => {
     if (stage === 1) renderPage1();
   }, 400);
@@ -74,8 +73,6 @@ window.addEventListener("message", (event) => {
 function renderPage1() {
   stage = 1;
 
-  // Build the selection boxes in the SAME ORDER as Task 1 (modelOrder),
-  // and apply color by position (purple/blue/orange/green).
   const boxesHtml = modelOrder
     .map((modelId, idx) => {
       const colorClass = COLOR_CLASSES_BY_POSITION[idx] || "";
@@ -91,8 +88,8 @@ function renderPage1() {
       <strong>You may only select one model</strong>, and you will not be able to change your choice.
     </p>
     <p>
-      You may ask the model a single question. After reviewing its response, you will enter a final answer.
-      <strong>You will receive a small bonus payment if you get the answer correct.</strong> Your bonus depends on accuracy.
+      You may request advice from the model once. After reviewing its response, you will enter a final answer.
+      <strong>You will receive a small bonus payment if you get the answer correct.</strong>
     </p>
 
     <h3><strong>Please select which model you would like to use:</strong></h3>
@@ -102,7 +99,6 @@ function renderPage1() {
 
   document.querySelectorAll(".model-choice").forEach(box => {
     box.addEventListener("click", () => {
-      // visual feedback
       document.querySelectorAll(".model-choice").forEach(el => el.classList.remove("selected"));
       box.classList.add("selected");
 
@@ -146,32 +142,37 @@ function renderLoadingModel() {
   setTimeout(renderPage2, 1200);
 }
 
-/* ---------------- STAGE 2 (UPDATED: fixed wide "Get advice from the model" button) ---------------- */
+/* ---------------- STAGE 2 ---------------- */
 
 function renderPage2() {
   stage = 2;
 
   app.innerHTML = `
     <h2>Ask the Model</h2>
-    <p><strong>Question:</strong> ${QUESTION_TEXT}</p>
+
+    <div class="question-highlight">
+      <strong>Question:</strong><br><br>
+      ${QUESTION_TEXT}
+    </div>
 
     <div id="chat"></div>
 
     <div class="chat-box">
-      <button id="getAdviceBtn" style="width:100%; padding:14px; font-size:16px; border-radius:10px;">Get advice from the model</button>
+      <button id="getAdviceBtn" style="width:100%; padding:14px; font-size:16px; border-radius:10px;">
+        Get advice from the model
+      </button>
     </div>
   `;
 
   const getAdviceBtn = document.getElementById("getAdviceBtn");
+
   getAdviceBtn.addEventListener("click", () => {
-    // Prevent double clicks
     getAdviceBtn.disabled = true;
     getAdviceBtn.textContent = "Requesting…";
 
     const chat = document.getElementById("chat");
 
-    // NOTE: we no longer add a chat-user message containing the question (per your request).
-    // We still send the identical task2_prompt postMessage so Qualtrics logging is unchanged.
+    // Keep logging identical for Qualtrics
     window.parent.postMessage(
       {
         type: "task2_prompt",
@@ -183,11 +184,9 @@ function renderPage2() {
       "*"
     );
 
-    // Remove the button area after the single-turn (preserves the "only one turn" constraint)
     const box = document.querySelector(".chat-box");
     if (box) box.remove();
 
-    // Indicate model is generating
     chat.innerHTML += `<div class="chat-message chat-model">Generating…</div>`;
 
     setTimeout(() => {
@@ -196,7 +195,6 @@ function renderPage2() {
       const msgs = document.querySelectorAll(".chat-message.chat-model");
       msgs[msgs.length - 1].remove();
 
-      // Only show the model's answer (no user question repeated)
       chat.innerHTML += `<div class="chat-message chat-model">${generatedAnswer}</div>`;
 
       window.parent.postMessage(
@@ -260,6 +258,4 @@ function renderPage3() {
 
 /* ---------------- INIT ---------------- */
 
-// Ask parent for model_order so colors match Task 1.
-// If parent doesn't respond, we fall back to A,B,C,D.
 requestModelOrderFromParent();
