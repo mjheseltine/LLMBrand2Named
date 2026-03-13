@@ -146,7 +146,7 @@ function renderLoadingModel() {
   setTimeout(renderPage2, 1200);
 }
 
-/* ---------------- STAGE 2 (UPDATED: fixed "Get advice" button) ---------------- */
+/* ---------------- STAGE 2 (UPDATED: fixed wide "Get advice from the model" button) ---------------- */
 
 function renderPage2() {
   stage = 2;
@@ -158,7 +158,7 @@ function renderPage2() {
     <div id="chat"></div>
 
     <div class="chat-box">
-      <button id="getAdviceBtn">Get advice</button>
+      <button id="getAdviceBtn" style="width:100%; padding:14px; font-size:16px; border-radius:10px;">Get advice from the model</button>
     </div>
   `;
 
@@ -170,11 +170,8 @@ function renderPage2() {
 
     const chat = document.getElementById("chat");
 
-    // Keep a visible trace similar to previous flow (user message)
-    // We add the same kind of chat-user message, but use the QUESTION_TEXT as the "prompt"
-    chat.innerHTML += `<div class="chat-message chat-user">${QUESTION_TEXT}</div>`;
-
-    // Send the same message type/shape as before so Qualtrics parent still captures it
+    // NOTE: we no longer add a chat-user message containing the question (per your request).
+    // We still send the identical task2_prompt postMessage so Qualtrics logging is unchanged.
     window.parent.postMessage(
       {
         type: "task2_prompt",
@@ -199,6 +196,7 @@ function renderPage2() {
       const msgs = document.querySelectorAll(".chat-message.chat-model");
       msgs[msgs.length - 1].remove();
 
+      // Only show the model's answer (no user question repeated)
       chat.innerHTML += `<div class="chat-message chat-model">${generatedAnswer}</div>`;
 
       window.parent.postMessage(
